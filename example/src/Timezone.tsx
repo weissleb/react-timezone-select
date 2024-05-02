@@ -18,6 +18,7 @@ const timezones = {
   ...allTimezones,
   'America/Lima': 'Pittsburgh',
   'Europe/Berlin': 'Frankfurt',
+  'America/Indianapolis': 'Eastern Time',
 };
 
 type ITimeDisplay = {
@@ -28,8 +29,10 @@ type ITimeDisplay = {
 
 const TimeDisplay = ( { currentDatetime, selectedTimezone, selectOptions }:ITimeDisplay ) => {
   const { options } = useTimezoneSelect(selectOptions);
-  const td = options.filter((option) => option.value == selectedTimezone.value);
-  console.log(JSON.stringify(td, null, 2));
+  console.log('options => ' + JSON.stringify(options, null, 2));
+  console.log("selectedTimezone => " + JSON.stringify(selectedTimezone, null, 2));
+  const td = options.filter((option) => option.value == (typeof selectedTimezone === 'string' ? selectedTimezone : selectedTimezone.value));
+  // console.log(JSON.stringify(td, null, 2));
   return (
     <div className="code">
       <div>
@@ -45,9 +48,11 @@ const TimeDisplay = ( { currentDatetime, selectedTimezone, selectOptions }:ITime
 }
 
 const Timezone = () => {
-  const [selectedTimezone, setSelectedTimezone] = useState<ITimezone>('');
+  const [selectedTimezone, setSelectedTimezone] = useState<ITimezone>(
+    Intl.DateTimeFormat().resolvedOptions().timeZone,
+  );
   const [selectStyle, setSelectStyle] =
-    React.useState<ISelectStyle>('react-select');
+    React.useState<ISelectStyle>('select');
   const [labelStyle, setLabelStyle] = useState<ILabelStyle>('original');
   const [currentDatetime, setCurrentDatetime] = useState(new Date());
 
@@ -95,7 +100,9 @@ const Timezone = () => {
       <div>
         <DatePicker
           selected={currentDatetime}
-          onChange={(date) => {handleDateChange(date)}}
+          onChange={(date) => {
+            handleDateChange(date);
+          }}
         />
       </div>
       <div className="select-wrapper">
@@ -126,7 +133,13 @@ const Timezone = () => {
           react-select
         </label>
         <label htmlFor="select">
-          <input type="radio" id="select" name="selectStyle" value="select" />
+          <input
+            type="radio"
+            id="select"
+            name="selectStyle"
+            value="select"
+            defaultChecked={selectStyle === 'select'}
+          />
           select
         </label>
       </div>
@@ -160,7 +173,11 @@ const Timezone = () => {
           offsetHidden
         </label>
       </div>
-      <TimeDisplay currentDatetime={currentDatetime} selectedTimezone={selectedTimezone} selectOptions={selectOptions}></TimeDisplay>
+      <TimeDisplay
+        currentDatetime={currentDatetime}
+        selectedTimezone={selectedTimezone}
+        selectOptions={selectOptions}
+      ></TimeDisplay>
     </div>
   );
 };
