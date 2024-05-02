@@ -50,6 +50,7 @@
     "react-select": "^5.7.3"
   },
   "dependencies": {
+    "react-datepicker": "^6.9.0",
     "spacetime": "^7.4.8",
     "timezone-soft": "^1.5.1"
   },

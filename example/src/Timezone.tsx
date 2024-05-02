@@ -1,12 +1,16 @@
+/* eslint-disable prettier/prettier */
 import React, { useMemo, useState } from 'react';
 import spacetime from 'spacetime';
 import TimezoneSelect, { allTimezones, useTimezoneSelect } from '../../dist';
-import type {
+import {
   ITimezone,
   ILabelStyle,
   TimezoneSelectOptions,
   ITimezoneOption,
 } from '../../dist';
+import DatePicker from 'react-datepicker';
+
+import 'react-datepicker/dist/react-datepicker.css';
 
 export type ISelectStyle = 'react-select' | 'select';
 
@@ -16,11 +20,36 @@ const timezones = {
   'Europe/Berlin': 'Frankfurt',
 };
 
+type ITimeDisplay = {
+  currentDatetime: Date
+  selectedTimezone: ITimezone
+  selectOptions: TimezoneSelectOptions
+}
+
+const TimeDisplay = ( { currentDatetime, selectedTimezone, selectOptions }:ITimeDisplay ) => {
+  const { options } = useTimezoneSelect(selectOptions);
+  const td = options.filter((option) => option.value == selectedTimezone.value);
+  console.log(JSON.stringify(td, null, 2));
+  return (
+    <div className="code">
+      <div>
+        Date / Time in{' '}
+        {typeof selectedTimezone === 'string'
+          ? selectedTimezone.split('/')[1]
+          : selectedTimezone.value.split('/')[1]}
+        : <pre>{spacetime(currentDatetime).unixFmt('MM.dd.YY HH:mm:ss')}</pre>
+      </div>
+      <pre>{JSON.stringify(td, null, 2)}</pre>
+    </div>
+  );
+}
+
 const Timezone = () => {
-  const [selectedTimezone, setSelectedTimezone] = React.useState<ITimezone>('');
+  const [selectedTimezone, setSelectedTimezone] = useState<ITimezone>('');
   const [selectStyle, setSelectStyle] =
     React.useState<ISelectStyle>('react-select');
-  const [labelStyle, setLabelStyle] = React.useState<ILabelStyle>('original');
+  const [labelStyle, setLabelStyle] = useState<ILabelStyle>('original');
+  const [currentDatetime, setCurrentDatetime] = useState(new Date());
 
   const handleSelectChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectStyle(event.target.value as ISelectStyle);
@@ -28,20 +57,24 @@ const Timezone = () => {
   const handleLabelChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setLabelStyle(event.target.value as ILabelStyle);
   };
+  const handleDateChange = (date) => {
+    setCurrentDatetime(date);
+  };
 
-  const [datetime, setDatetime] = useState(spacetime.now());
+  // const [datetime, setDatetime] = useState(spacetime.now());
 
   useMemo(() => {
     const tzValue =
       typeof selectedTimezone === 'string'
         ? selectedTimezone
         : selectedTimezone.value;
-    setDatetime(datetime.goto(tzValue));
+    setCurrentDatetime((spacetime(currentDatetime)).goto(tzValue).toNativeDate());
   }, [selectedTimezone]);
 
   const selectOptions = {
     labelStyle,
     timezones,
+    currentDatetime,
   };
 
   return (
@@ -58,6 +91,12 @@ const Timezone = () => {
             ndom91
           </a>
         </p>
+      </div>
+      <div>
+        <DatePicker
+          selected={currentDatetime}
+          onChange={(date) => {handleDateChange(date)}}
+        />
       </div>
       <div className="select-wrapper">
         {selectStyle === 'react-select' ? (
@@ -121,16 +160,7 @@ const Timezone = () => {
           offsetHidden
         </label>
       </div>
-      <div className="code">
-        <div>
-          Current Date / Time in{' '}
-          {typeof selectedTimezone === 'string'
-            ? selectedTimezone.split('/')[1]
-            : selectedTimezone.value.split('/')[1]}
-          : <pre>{datetime.unixFmt('dd.MM.YY HH:mm:ss')}</pre>
-        </div>
-        <pre>{JSON.stringify(selectedTimezone, null, 2)}</pre>
-      </div>
+      <TimeDisplay currentDatetime={currentDatetime} selectedTimezone={selectedTimezone} selectOptions={selectOptions}></TimeDisplay>
     </div>
   );
 };
